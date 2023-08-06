@@ -33,8 +33,21 @@ void LSX::S(BlockVector& state) {
     }
 }
 
-LSX& LSX::R() {
+LSX& LSX::S_inv() {
+    for (size_t i{}; i < state_size_; ++i) {
+        state_[i] = sbox_inv_[state_[i]];
+    }
 
+    return *this;
+}
+
+void LSX::S_inv(BlockVector& state) {
+    for (size_t i{}; i < state_size_; ++i) {
+        state[i] = sbox_inv_[state[i]];
+    }
+}
+
+LSX& LSX::R() {
     uint8_t l{state_[0]};
 
     for(size_t i{1}; i < state_size_; ++i) {
@@ -58,6 +71,29 @@ LSX& LSX::R(BlockVector& state) {
     return *this;
 }
 
+LSX& LSX::R_inv() {
+    uint8_t l{state_[15]};
+
+    for(int i{14}; i >= 0; --i) {
+        l ^= gf_mult(lvec_[i+1], state_[i]);
+        state_[i+1] = state_[i];
+    }
+    state_[0] = l;
+    return *this;
+}
+
+LSX& LSX::R_inv(BlockVector& state) {
+    uint8_t l{state[15]};
+
+    for(int i{14}; i >= 0; --i) {
+        l ^= gf_mult(lvec_[i+1], state[i]);
+        state_[i+1] = state[i];
+    }
+
+    state[0] = l;
+    return *this;
+}
+
 LSX& LSX::L() {
 
     for(size_t i{}; i < state_size_; ++i) {
@@ -71,6 +107,24 @@ LSX& LSX::L(BlockVector& state) {
 
     for(size_t i{}; i < state_size_; ++i) {
         R(state);
+    }
+
+    return *this;
+}
+
+LSX& LSX::L_inv() {
+
+    for(size_t i{}; i < state_size_; ++i) {
+        R_inv();
+    }
+
+    return *this;
+}
+
+LSX& LSX::L_inv(BlockVector& state) {
+
+    for(size_t i{}; i < state_size_; ++i) {
+        R_inv(state);
     }
 
     return *this;
@@ -138,6 +192,24 @@ LSX::E(BlockVector&& msg) {
         X(keys_[round]).S().L();
 
     X(keys_[9]);
+}
+
+void
+LSX::D() {
+    for(size_t round{9}; round; --round)
+        X(keys_[round]).L_inv().S_inv();
+
+    X(keys_[0]);
+}
+
+void
+LSX::D(BlockVector&& msg) {
+    state_ = std::move(msg);
+
+    for(size_t round{9}; round; --round)
+        X(keys_[round]).L_inv().S_inv();
+
+    X(keys_[0]);
 }
 
 }
