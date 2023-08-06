@@ -70,6 +70,13 @@ build CMakeFiles/Cryptoprotocols.dir/main.cpp.o: CXX_COMPILER__Cryptoprotocols_D
   OBJECT_DIR = CMakeFiles/Cryptoprotocols.dir
   OBJECT_FILE_DIR = CMakeFiles/Cryptoprotocols.dir
 
+build CMakeFiles/Cryptoprotocols.dir/lab2/hmac.cpp.o: CXX_COMPILER__Cryptoprotocols_Debug /home/kadius/Desktop/git/Cryptoprotocols/lab2/hmac.cpp || cmake_object_order_depends_target_Cryptoprotocols
+  DEP_FILE = CMakeFiles/Cryptoprotocols.dir/lab2/hmac.cpp.o.d
+  FLAGS = -g -fdiagnostics-color=always -std=gnu++14
+  INCLUDES = -I/home/kadius/Desktop/git/Cryptoprotocols/lab1 -I/home/kadius/Desktop/git/Cryptoprotocols/lab2 -I/home/kadius/Desktop/git/Cryptoprotocols/lab3 -I/home/kadius/Desktop/git/Cryptoprotocols/lab4
+  OBJECT_DIR = CMakeFiles/Cryptoprotocols.dir
+  OBJECT_FILE_DIR = CMakeFiles/Cryptoprotocols.dir/lab2
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Cryptoprotocols
@@ -78,7 +85,7 @@ build CMakeFiles/Cryptoprotocols.dir/main.cpp.o: CXX_COMPILER__Cryptoprotocols_D
 #############################################
 # Link the executable Cryptoprotocols
 
-build Cryptoprotocols: CXX_EXECUTABLE_LINKER__Cryptoprotocols_Debug CMakeFiles/Cryptoprotocols.dir/lab1/LSX.cpp.o CMakeFiles/Cryptoprotocols.dir/lab2/Streebog.cpp.o CMakeFiles/Cryptoprotocols.dir/main.cpp.o
+build Cryptoprotocols: CXX_EXECUTABLE_LINKER__Cryptoprotocols_Debug CMakeFiles/Cryptoprotocols.dir/lab1/LSX.cpp.o CMakeFiles/Cryptoprotocols.dir/lab2/Streebog.cpp.o CMakeFiles/Cryptoprotocols.dir/main.cpp.o CMakeFiles/Cryptoprotocols.dir/lab2/hmac.cpp.o
   FLAGS = -g
   OBJECT_DIR = CMakeFiles/Cryptoprotocols.dir
   POST_BUILD = :

@@ -28,7 +28,7 @@ private:
 
     std::ofstream log;
 
-    size_t state_size_{16};
+    static constexpr size_t state_size_{16};
     uint8_t poly{0xc3};
 
     BlockVector sbox_ = {0xFC, 0xEE, 0xDD, 0x11, 0xCF, 0x6E, 0x31, 0x16, 0xFB,
@@ -131,6 +131,63 @@ public:
         key_schedule();
     }
 
+    template<typename Vector>
+    LSX(BlockVector&& state, Vector&& master_key) {
+        log = std::ofstream("lsxlog.txt", std::ios_base::app);
+
+        initialize_round_constants();
+        master_key_ = BlockVector{0xef,0xcd,0xab,0x89,0x67,0x45,0x23,0x01,0x10,0x32,0x54,0x76,0x98,0xba,0xdc,0xfe,0x77,0x66,0x55,0x44,0x33,0x22,0x11,0x00,0xff,0xee,0xdd,0xcc,0xbb,0xaa,0x99,0x88};
+        state_ = BlockVector{0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff,0x00,0x77,0x66,0x55,0x44,0x33,0x22,0x11};
+        key_schedule();
+        E();
+        BlockVector test_case = {0x7f,0x67,0x9d,0x90,0xbe,0xbc,0x24,0x30,0x5a,0x46,0x8d,0x42,0xb9,0xd4,0xed,0xcd};
+        for(size_t i{}; i < 16; ++i) {
+            //TEST CASE FAIL:
+            if(state_[i] != test_case[15-i]) {
+                std::cout << "PROGRAM HAS BEEN COMPROMISED!";
+                time_stamp();
+                log << ("...from cipher class constructor->") << this;
+                log << "PROGRAM HAS BEEN COMPROMISED!" << std::endl;
+            }
+        }
+
+        state_.clear();
+        keys_.clear();
+        master_key_ = std::forward<Vector>(master_key);
+        key_schedule();
+        state_ = std::move(state);
+    }
+
+    template<typename State, typename Vector>
+    LSX(State& state, Vector&& master_key) {
+        log = std::ofstream("lsxlog.txt", std::ios_base::app);
+
+        initialize_round_constants();
+        master_key_ = BlockVector{0xef,0xcd,0xab,0x89,0x67,0x45,0x23,0x01,0x10,0x32,0x54,0x76,0x98,0xba,0xdc,0xfe,0x77,0x66,0x55,0x44,0x33,0x22,0x11,0x00,0xff,0xee,0xdd,0xcc,0xbb,0xaa,0x99,0x88};
+        state_ = BlockVector{0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff,0x00,0x77,0x66,0x55,0x44,0x33,0x22,0x11};
+        key_schedule();
+        E();
+        BlockVector test_case = {0x7f,0x67,0x9d,0x90,0xbe,0xbc,0x24,0x30,0x5a,0x46,0x8d,0x42,0xb9,0xd4,0xed,0xcd};
+        for(size_t i{}; i < 16; ++i) {
+            //TEST CASE FAIL:
+            if(state_[i] != test_case[15-i]) {
+                std::cout << "PROGRAM HAS BEEN COMPROMISED!";
+                time_stamp();
+                log << ("...from cipher class constructor->") << this;
+                log << "PROGRAM HAS BEEN COMPROMISED!" << std::endl;
+            }
+        }
+
+        state_.clear();
+        keys_.clear();
+        master_key_ = std::forward<Vector>(master_key);
+        key_schedule();
+        state_.resize(state_size_);
+        for(size_t i{}; i < state_size_; ++i) {
+            state_.at(i) = state[i];
+        }
+    }
+
     ~LSX() {
         //fill in key information with zeroes so that it would not remain in memory
         for(auto& k: master_key_) {
@@ -192,11 +249,9 @@ public:
     void D();
     void D(BlockVector&& msg);
 private:
-    template<typename DestType>
     friend
-    auto
-    OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key, DestType& destination)
-    -> void;
+    BlockVector
+    OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key);
 
     BlockVector
     OMAC_impl(size_t s, const BlockVector& message, size_t msg_length) {
@@ -300,41 +355,15 @@ public:
     get_state() {
         return state_;
     }
-};
 
-    template<typename DestType>
-    auto
-    OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key, DestType& destination)
-    -> void
-    {
-        auto log = std::ofstream("omaclog.txt", std::ios_base::app);
-
-        //TEST CASE
-        BlockVector test_case = {0xe3,0xfb,0x59,0x60,0x29,0x4d,0x6f,0x33};
-        BlockVector test_message{0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x0a, 0xff, 0xee, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0x00, 0x0a, 0xff, 0xee, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x11, 0x00, 0x0a, 0xff, 0xee, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22};
-
-        BlockVector test_key{0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01, 0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88};
-
-        LSX test_cipher(std::move(test_key));
-        auto res = test_cipher.OMAC_impl(64, test_message, 16*4);
-        if(res != test_case) {
-            std::cout << "OMAC IMPLEMENTATION HAS BEEN COMPROMISED!" << std::endl;
-            std::cout << "...aborting now." << std::endl;
-
-            time_t result = time(NULL);
-            if(result != (time_t)(-1))
-                log << asctime(gmtime(&result));
-            log << "[OMAC IMPLEMENTATION HAS BEEN COMPROMISED!]" << std::endl;
-            log << "[...aborting now.]" << std::endl;
-
-            exit(3);
-        }
-
-        LSX cipher(std::move(key));
-        auto tmp = cipher.OMAC_impl(s, message, msg_length);
-        for(size_t i{}; i < s/8; ++i) {
-            destination[i] = tmp[i];
+    void load_state(uint8_t (&dest)[state_size_]) {
+        for(size_t i{}; i < state_size_; ++i) {
+            dest[i] = state_.at(i);
         }
     }
+};
+
+    BlockVector
+    OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key);
 }//cipher
 #endif

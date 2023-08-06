@@ -25,18 +25,20 @@ struct crisp_message {
         uint64_t SeqNum = 0;//порядковый номер сообщения. длина равна длине синхропосылки
     };
     crisp_header header;//12 bytes
-    std::vector<uint8_t> PayloadData;//128 bytes
-    std::vector<uint8_t> ICV;//имитовставка всего сообщения
+    uint8_t PayloadData[16];//16 bytes
+    uint8_t ICV[8];//имитовставка всего сообщения
 
     //TODO:: arbitrary msg length
     //TODO:: rework move_semantics interface of keys
     //for now message length = one block
-    crisp_message(BlockVector&& message, const BlockVector& cipher_key, BlockVector&& omac_key) {
-        LSX cipher{cipher_key};
+    crisp_message(BlockVector&& message, BlockVector&& cipher_key, BlockVector&& omac_key) {
+        LSX cipher(std::move(cipher_key));
         cipher.E(std::move(message));
-        PayloadData = cipher.get_state();
+        cipher.load_state(PayloadData);
 
-        BlockVector this_message(12+128, 0);
+        BlockVector this_message(12+16, 0);
+        this_message[0] = header.version;
+        this_message[1] = header.version >> 8;
         this_message[2] = header.CS;
         this_message[3] = header.KeyId;
         this_message[4] = header.SeqNum;
@@ -48,11 +50,12 @@ struct crisp_message {
         this_message[10] = (header.SeqNum >> 48);
         this_message[11] = (header.SeqNum >> 56);
 
-        for(size_t i{}; i < 128; ++i) {
+        for(size_t i{}; i < 16; ++i) {
             this_message[i+12] = PayloadData[i];
         }
 
-        OMAC(MAC_SIZE, this_message, 12+128, std::move(omac_key), ICV);
+        auto mac = OMAC(MAC_SIZE, this_message, 12+16, std::move(omac_key));
+        std::copy(mac.begin(), mac.end(), ICV);
     }
 
 
