@@ -5,86 +5,57 @@
 #include "LSX.hpp"
 
 namespace cipher {
-LSX& X_impl(LSX& cipher, const BlockVector& key) {
-    for(size_t i = 0; i < cipher.state_size_; ++i) {
-        cipher.state_[i] ^= key[i];
-    }
-
-    return cipher;
-}
 
 LSX& LSX::X(const BlockVector& key) {
-    return X_impl(*this, key);
+    for(size_t i = 0; i < state_size_; ++i) {
+        state_[i] ^= key[i];
+    }
+    return *this;
 }
 
-void X_impl_2(LSX& cipher, BlockVector& state, const BlockVector& key) {
-    for(size_t i{}; i < cipher.state_size_; ++i) {
+void LSX::X(BlockVector& state, const BlockVector& key) {
+    for(size_t i{}; i < state_size_; ++i) {
         state[i] ^= key[i];
     }
 }
 
-void LSX::X(BlockVector& state, const BlockVector& key) {
-    X_impl_2(*this, state, key);
-}
-
-LSX& S_impl_1(LSX& cipher) {
-    for (size_t i{}; i < cipher.state_size_; ++i) {
-        cipher.state_[i] = cipher.sbox_[cipher.state_[i]];
-    }
-
-    return cipher;
-}
-
-
 LSX& LSX::S() {
-    return S_impl_1(*this);
-}
-
-
-void S_impl_2(LSX& cipher, BlockVector& state) {
-    for (size_t i{}; i < cipher.state_size_; ++i) {
-        state[i] = cipher.sbox_[state[i]];
+    for (size_t i{}; i < state_size_; ++i) {
+        state_[i] = sbox_[state_[i]];
     }
+
+    return *this;
 }
 
 void LSX::S(BlockVector& state) {
-    S_impl_2(*this, state);
-}
-
-LSX& R_impl_1(LSX& cipher) {
-
-    uint8_t l{cipher.state_[0]};
-
-    for(size_t i{1}; i < cipher.state_size_; ++i) {
-        l ^= gf_mult(cipher.lvec_[i], cipher.state_[i]);
-        cipher.state_[i-1] = cipher.state_[i];
+    for (size_t i{}; i < state_size_; ++i) {
+        state[i] = sbox_[state[i]];
     }
-
-    cipher.state_[15] = l;
-
-    return cipher;
 }
 
 LSX& LSX::R() {
-    return R_impl_1(*this);
+
+    uint8_t l{state_[0]};
+
+    for(size_t i{1}; i < state_size_; ++i) {
+        l ^= gf_mult(lvec_[i], state_[i]);
+        state_[i-1] = state_[i];
+    }
+    state_[15] = l;
+    return *this;
 }
 
-LSX& R_impl_2(LSX& cipher, BlockVector& state) {
-
+LSX& LSX::R(BlockVector& state) {
     uint8_t l{state[0]};
 
-    for(size_t i{1}; i < cipher.state_size_; ++i) {
-        l ^= gf_mult(cipher.lvec_[i], state[i]);
+    for(size_t i{1}; i < state_size_; ++i) {
+        l ^= gf_mult(lvec_[i], state[i]);
         state[i-1] = state[i];
     }
 
     state[15] = l;
 
-    return cipher;
-}
-
-LSX& LSX::R(BlockVector& state) {
-    return R_impl_2(*this, state);
+    return *this;
 }
 
 LSX& LSX::L() {
@@ -110,7 +81,6 @@ auto
 LSX::F(const BlockVector& Ki, const BlockVector& C)
 -> BlockVector
 {
-
     auto internal = Ki;
 
     X(internal, C);

@@ -9,7 +9,11 @@
 using BlockVector = std::vector<uint8_t>;
 using BlockMatrix = std::vector<std::vector<uint8_t>>;
 
-static BlockVector operator^(BlockVector& lhs, BlockVector& rhs) {
+static
+auto
+operator^(BlockVector& lhs, BlockVector& rhs)
+->BlockVector
+{
     auto block_sz = lhs.size();
     BlockVector tmp(block_sz, 0);
     for(int i{}; i < block_sz; ++i) {
@@ -19,11 +23,12 @@ static BlockVector operator^(BlockVector& lhs, BlockVector& rhs) {
     return tmp;
 }
 
-void vxor(BlockVector& lhs, BlockVector& rhs, BlockVector& dest) {
-    auto block_sz = lhs.size();
-//    BlockVector tmp(block_sz, 0);
-    for(int i{}; i < block_sz; ++i) {
-        dest[i] = lhs[i]^rhs[i];
+static
+void
+operator^=(BlockVector& lhs, const BlockVector& rhs)
+{
+    for(int i{}; i < lhs.size(); ++i) {
+        lhs[i] ^= rhs[i];
     }
 }
 
@@ -43,10 +48,16 @@ static uint8_t gf_mult(uint8_t a, uint8_t b) {
 
 static
 void operator<<=(BlockVector& lhs, size_t n) {
-    for(size_t i{}; i < lhs.size()-1; ++i) {
-        std::swap(lhs[i], lhs[i+1]);
+
+    bool msb = lhs[15] & 0x80;
+    lhs[0] <<= 1;
+
+    for(int i{1}; i < 16; ++i) {
+        bool cur_msb = lhs[i] & 0x80;
+        lhs[i] <<= 1;
+        lhs[i] |= msb;
+        msb = cur_msb;
     }
-    lhs.back() = 0;
 }
 
 

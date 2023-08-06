@@ -16,4 +16,4 @@ add_executable(Cryptoprotocols
         lab2/Streebog.hpp
         lab3/CSPRNG.hpp
         lab4/CRISP.hpp
-        main.cpp)
+        main.cpp auxiliary.hpp)
