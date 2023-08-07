@@ -2,5 +2,5 @@
 RFC: https://datatracker.ietf.org/doc/html/rfc7539#page-4 
 Значение для nonce следует брать из хорошего источника энтропии(dev/random подойдет). Опционально можно и значение ключа делать случайным и генерировать хорошие последовательности.\
 Тесты NIST дают хорошие результаты:
-![img.png](img.png)
+![image](https://github.com/KadiusLunarflame/Cryptoprotocols/assets/96685260/42db8dc5-fc5c-4e7a-a8db-410cae5270ef)
 Последовательность размером 16M проходит все тесты.
