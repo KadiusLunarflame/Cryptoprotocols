@@ -7,6 +7,8 @@
 
 #include <cstdint>
 #include <bitset>
+#include <iostream>
+#include <iomanip>
 
 class ChaCha20 {
   public:
