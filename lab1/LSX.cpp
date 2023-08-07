@@ -213,7 +213,7 @@ LSX::D(BlockVector&& msg) {
 }
 
 BlockVector
-OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key)
+OMAC(size_t s, const BlockVector& message, BlockVector&& key)
 {
     auto log = std::ofstream("omaclog.txt", std::ios_base::app);
 
@@ -224,7 +224,7 @@ OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key)
     BlockVector test_key{0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01, 0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88};
 
     LSX test_cipher(std::move(test_key));
-    auto res = test_cipher.OMAC_impl(64, test_message, 16*4);
+    auto res = test_cipher.OMAC_impl(64, test_message/*, 16*4*/);
     if(res != test_case) {
         std::cout << "OMAC IMPLEMENTATION HAS BEEN COMPROMISED!" << std::endl;
         std::cout << "...aborting now." << std::endl;
@@ -239,7 +239,36 @@ OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key)
     }
 
     LSX cipher(std::move(key));
-    return cipher.OMAC_impl(s, message, msg_length);
+    return cipher.OMAC_impl(s, message/*, msg_length*/);
+}
+template<size_t N>
+BlockVector
+OMAC(size_t s, const uint8_t (&message)[N], BlockVector&& key) {
+//    auto log = std::ofstream("omaclog.txt", std::ios_base::app);
+//
+//    //TEST CASE
+//    BlockVector test_case = {0xe3,0xfb,0x59,0x60,0x29,0x4d,0x6f,0x33};
+//    BlockVector test_message{0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x0a, 0xff, 0xee, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0x00, 0x0a, 0xff, 0xee, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x11, 0x00, 0x0a, 0xff, 0xee, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22};
+//
+//    BlockVector test_key{0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01, 0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88};
+//
+//    LSX test_cipher(std::move(test_key));
+//    auto res = test_cipher.OMAC_impl(64, test_message, 16*4);
+//    if(res != test_case) {
+//        std::cout << "OMAC IMPLEMENTATION HAS BEEN COMPROMISED!" << std::endl;
+//        std::cout << "...aborting now." << std::endl;
+//
+//        time_t result = time(NULL);
+//        if(result != (time_t)(-1))
+//        log << asctime(gmtime(&result));
+//        log << "[OMAC IMPLEMENTATION HAS BEEN COMPROMISED!]" << std::endl;
+//        log << "[...aborting now.]" << std::endl;
+//
+//        exit(3);
+//    }
+
+    LSX cipher(std::move(key));
+    return cipher.OMAC_impl(s, message);
 }
 
 }

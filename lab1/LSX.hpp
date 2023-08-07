@@ -251,10 +251,99 @@ public:
 private:
     friend
     BlockVector
-    OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key);
+    OMAC(size_t s, const BlockVector& message, BlockVector&& key);
 
     BlockVector
-    OMAC_impl(size_t s, const BlockVector& message, size_t msg_length) {
+    OMAC_impl(size_t s, const BlockVector& message) {
+        std::vector<uint8_t> B(16, 0);
+        B[0] = 0x87;
+        std::vector<uint8_t> state(16,0);
+
+        E(std::move(state));
+        auto R = get_state();
+
+        BlockVector K1, K2;
+        if(R.back() & 0x80) {
+            R <<= 1;
+            K1 = std::move(R);
+            K1 ^= B;
+        } else {
+            R <<= 1;
+            K1 = std::move(R);
+        }
+
+        auto tmpK1 = K1;
+
+        if(K1.back() & 0x80) {
+            tmpK1 <<= 1;
+            K2 = std::move(tmpK1);
+            K2 ^= B;
+        } else {
+            tmpK1 <<= 1;
+            K2 = std::move(tmpK1);
+        }
+
+        std::vector<uint8_t> C0(16, 0);
+        set_state(std::move(C0));
+
+        size_t num = message.size()/16;
+        size_t incomplete = message.size()%16;
+
+        std::vector<std::vector<uint8_t>> messages(num, std::vector<uint8_t>(16, 0));
+
+        for(size_t i{}; i < num; ++i) {
+            for(size_t j{}; j < 16; ++j) {
+                messages[i][j] = message[i*16+j];
+            }
+        }
+
+        if(incomplete == 0) {
+
+            for(size_t i{}; i < num-1; ++i) {
+                X(messages[i]).E();
+            }
+
+            X(messages[num-1]).X(K1).E();
+            auto res = get_state();
+//            res.resize(s/8);
+            std::vector<uint8_t> result;
+            auto iterator = res.end();
+            std::advance(iterator, -(s/8));
+            for(;iterator != res.end(); ++iterator) {
+                result.push_back(*iterator);
+            }
+
+            return result;
+        }
+
+        std::vector<uint8_t> last_msg{16, 0};
+        size_t last_message_begin_index = message.size()-incomplete;
+        size_t last_message_length = incomplete;
+        size_t j{};
+        for (; j < last_message_length; ++j) {
+            last_msg[j] = message[last_message_begin_index + j];
+        }
+        last_msg[incomplete] = 1;
+
+        X(last_msg).X(K2).E();
+        auto res = get_state();
+
+        std::vector<uint8_t> result;
+        auto iterator = res.end();
+        std::advance(iterator, -(s/8));
+        for(;iterator != res.end(); ++iterator) {
+            result.push_back(*iterator);
+        }
+
+        return result;
+    }
+
+    template<size_t N>
+    friend BlockVector OMAC(size_t s, const uint8_t (&message)[N], BlockVector&& key);
+
+    template<size_t msg_length>
+    BlockVector
+    OMAC_impl(size_t s, const uint8_t (&message)[msg_length]) {
         std::vector<uint8_t> B(16, 0);
         B[0] = 0x87;
         std::vector<uint8_t> state(16,0);
@@ -364,6 +453,9 @@ public:
 };
 
     BlockVector
-    OMAC(size_t s, const BlockVector& message, size_t msg_length, BlockVector&& key);
+    OMAC(size_t s, const BlockVector& message,/* size_t msg_length,*/ BlockVector&& key);
+
+    template<size_t N>
+    BlockVector OMAC(size_t s, const uint8_t (&message)[N], BlockVector&& key);
 }//cipher
 #endif
